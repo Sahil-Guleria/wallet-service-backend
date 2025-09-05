@@ -1,6 +1,6 @@
 require('dotenv').config();
 
-module.exports = {
+const config = {
   development: {
     username: 'postgres',
     password: '1234',
@@ -10,15 +10,15 @@ module.exports = {
     dialect: 'postgres',
     logging: false,
     pool: {
-      max: 20,         // Maximum number of connection in pool
-      min: 5,          // Minimum number of connection in pool
-      acquire: 30000,  // Maximum time, in milliseconds, that pool will try to get connection before throwing error
-      idle: 10000,     // Maximum time, in milliseconds, that a connection can be idle before being released
-      evict: 1000,     // Time to check for idle connections to evict
+      max: 20,
+      min: 5,
+      acquire: 30000,
+      idle: 10000,
+      evict: 1000,
     },
     dialectOptions: {
-      statement_timeout: 10000,     // Timeout for queries (10s)
-      idle_in_transaction_session_timeout: 10000  // Timeout for idle transactions (10s)
+      statement_timeout: 10000,
+      idle_in_transaction_session_timeout: 10000
     }
   },
   test: {
@@ -36,26 +36,25 @@ module.exports = {
     }
   },
   production: {
-    username: process.env.DB_USER,
-    password: process.env.DB_PASSWORD,
-    database: process.env.DB_NAME,
-    host: process.env.DB_HOST,
+    use_env_variable: 'DATABASE_URL',
     dialect: 'postgres',
     logging: false,
     pool: {
-      max: 50,         // More connections for production
+      max: 50,
       min: 10,
       acquire: 30000,
       idle: 10000,
       evict: 1000
     },
     dialectOptions: {
-      statement_timeout: 15000,     // Slightly longer timeout for production
+      statement_timeout: 15000,
       idle_in_transaction_session_timeout: 15000,
       ssl: {
         require: true,
-        rejectUnauthorized: false   // For Heroku/AWS style SSL
+        rejectUnauthorized: false
       }
     }
   }
 };
+
+module.exports = config;
