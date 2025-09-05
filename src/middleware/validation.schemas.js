@@ -41,13 +41,22 @@ const transactionSchema = Joi.object({
       if (isNaN(value) || !isFinite(value)) {
         return helpers.error('number.base');
       }
-      return Number(value);
+      const numValue = Number(value);
+      if (numValue > 0 && numValue < 0.0001) {
+        return helpers.error('number.min');
+      }
+      if (numValue < 0 && numValue > -0.0001) {
+        return helpers.error('number.min');
+      }
+      return numValue;
     })
     .messages({
       ...messages,
       'number.zero': 'Transaction amount cannot be zero',
       'number.max': 'Transaction amount cannot exceed 999,999,999.9999',
-      'number.base': 'Transaction amount must be a valid number'
+      'number.base': 'Transaction amount must be a valid number',
+      'number.min': 'Transaction amount must be at least 0.0001 or at most -0.0001',
+      'number.precision': 'Transaction amount cannot have more than 4 decimal places'
     }),
   description: Joi.string()
     .trim()

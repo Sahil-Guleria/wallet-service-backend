@@ -5,12 +5,25 @@ const errorHandler = (err, req, res, next) => {
   logger.error('Error:', {
     message: err.message,
     stack: err.stack,
-    details: err.details
+    details: err.details,
+    name: err.name
   });
+
+  // Handle business logic errors (like insufficient balance)
+  if (err.message && err.message.includes('Insufficient balance')) {
+    return res.status(400).json({
+      status: 'fail',
+      error: 'Transaction Failed',
+      details: [{
+        field: 'amount',
+        message: err.message
+      }]
+    });
+  }
 
   if (err instanceof ApiError) {
     return res.status(err.statusCode).json({
-      status: err.status,
+      status: 'fail',
       error: err.message,
       details: err.details
     });
@@ -52,6 +65,18 @@ const errorHandler = (err, req, res, next) => {
     });
   }
 
+  // Handle decimal precision errors
+  if (err.message && err.message.includes('decimal')) {
+    return res.status(400).json({
+      status: 'fail',
+      error: 'Validation Error',
+      details: [{
+        field: 'amount',
+        message: 'Amount cannot have more than 4 decimal places'
+      }]
+    });
+  }
+
   // Default error
   const errorMessage = err.message || 'Internal Server Error';
   const errorDetails = process.env.NODE_ENV === 'development' 
@@ -61,11 +86,14 @@ const errorHandler = (err, req, res, next) => {
         name: err.name,
         ...(err.details && { details: err.details })
       }
-    : undefined;
+    : [{
+        field: 'general',
+        message: errorMessage
+      }];
 
   res.status(500).json({
     status: 'error',
-    error: errorMessage,
+    error: 'Internal Server Error',
     details: errorDetails
   });
 };

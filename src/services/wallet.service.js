@@ -1,5 +1,6 @@
 const { Wallet, Transaction, sequelize, Sequelize } = require('../models');
 const { logger } = require('../config/logger');
+const ApiError = require('../utils/ApiError');
 const { cacheWalletData, getCachedWalletData, invalidateWalletCache } = require('../middleware/cache');
 
 class WalletService {
@@ -144,7 +145,10 @@ class WalletService {
       const currentBalance = Number(Number(wallet.balance).toFixed(4));
       
       if (transactionType === 'DEBIT' && currentBalance < absoluteAmount) {
-        throw new Error(`Insufficient balance: ${currentBalance} < ${absoluteAmount}`);
+        throw new ApiError(400, 'Transaction Failed', [{
+          field: 'amount',
+          message: `Insufficient balance. Available: ${currentBalance}, Required: ${absoluteAmount}`
+        }]);
       }
       
       const updatedBalance = Number(

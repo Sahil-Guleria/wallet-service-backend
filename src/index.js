@@ -16,6 +16,14 @@ app.use(compression());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+app.get('/', (req, res) => {
+  res.json({ 
+    status: 'ok',
+    message: 'Wallet Service Backend is running',
+    timestamp: new Date().toISOString()
+  });
+});
+
 app.use((req, res, next) => {
   res.setHeader('X-Content-Type-Options', 'nosniff');
   res.setHeader('X-Frame-Options', 'DENY');
@@ -76,7 +84,7 @@ app.use(
 app.use('/wallet', walletRoutes);
 app.use(errorHandler);
 
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 3001;
 
 async function startServer() {
   try {

@@ -2,6 +2,7 @@ const express = require('express');
 const authController = require('../controllers/auth.controller');
 const validate = require('../middleware/validate');
 const Joi = require('joi');
+const { logger } = require('../config/logger');
 
 const router = express.Router();
 
@@ -53,6 +54,21 @@ const loginSchema = Joi.object({
       ...messages,
       'string.empty': 'Please enter your password'
     })
+});
+
+// Debug middleware for auth routes
+router.use((req, res, next) => {
+  logger.info('Auth request received:', {
+    method: req.method,
+    path: req.path,
+    body: req.body,
+    headers: {
+      origin: req.headers.origin,
+      'content-type': req.headers['content-type'],
+      'idempotency-key': req.headers['idempotency-key']
+    }
+  });
+  next();
 });
 
 router.post('/register',
