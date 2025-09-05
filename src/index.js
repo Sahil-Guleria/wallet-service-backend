@@ -25,10 +25,7 @@ app.use((req, res, next) => {
 });
 
 app.use((req, res, next) => {
-  const allowedOrigins = ['http://localhost:3001', 'http://localhost:3000'];
-  if (process.env.NODE_ENV === 'production') {
-    allowedOrigins.push('https://your-frontend-domain.com');
-  }
+  const allowedOrigins = ['http://localhost:3001', 'http://localhost:3000', 'https://wallet-service-frontend.onrender.com'];
   
   const origin = req.headers.origin;
   if (allowedOrigins.includes(origin)) {
