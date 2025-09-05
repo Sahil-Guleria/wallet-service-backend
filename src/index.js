@@ -83,10 +83,19 @@ async function startServer() {
     await sequelize.authenticate();
     logger.info('Database connection has been established successfully.');
 
-    if (process.env.NODE_ENV === 'development') {
-      await sequelize.sync();
-      logger.info('Database synced successfully');
-    }
+    const { Umzug, SequelizeStorage } = require('umzug');
+    const path = require('path');
+
+    const umzug = new Umzug({
+      migrations: { glob: 'src/db/migrations/*.js' },
+      context: sequelize.getQueryInterface(),
+      storage: new SequelizeStorage({ sequelize }),
+      logger: console,
+    });
+
+    logger.info('Running migrations...');
+    await umzug.up();
+    logger.info('Migrations completed successfully');
 
     app.listen(PORT, () => {
       logger.info(`Server is running on port ${PORT}`);
