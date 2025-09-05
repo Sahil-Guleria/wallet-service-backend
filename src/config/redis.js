@@ -12,7 +12,8 @@ const redisClient = createClient({
       }
       return Math.min(retries * 100, 3000);
     }
-  }
+  },
+  tls: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : undefined
 });
 
 redisClient.on('error', (err) => {
@@ -29,9 +30,15 @@ redisClient.on('reconnecting', () => {
 
 const connectRedis = async () => {
   try {
+    if (!process.env.REDIS_URL) {
+      logger.warn('REDIS_URL not provided, using default localhost');
+    }
     await redisClient.connect();
   } catch (error) {
     logger.error('Redis Connection Error:', error);
+    if (process.env.NODE_ENV === 'production') {
+      throw error;
+    }
   }
 };
 
