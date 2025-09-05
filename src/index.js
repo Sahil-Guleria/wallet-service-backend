@@ -23,10 +23,14 @@ app.use((req, res, next) => {
   res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
   next();
 });
+
 app.use((req, res, next) => {
   const allowedOrigins = ['http://localhost:3001', 'http://localhost:3000'];
-  const origin = req.headers.origin;
+  if (process.env.NODE_ENV === 'production') {
+    allowedOrigins.push('https://your-frontend-domain.com');
+  }
   
+  const origin = req.headers.origin;
   if (allowedOrigins.includes(origin)) {
     res.header('Access-Control-Allow-Origin', origin);
   }
@@ -89,22 +93,45 @@ async function startServer() {
 
     app.listen(PORT, () => {
       logger.info(`Server is running on port ${PORT}`);
-      logger.info(`API Documentation available at http://localhost:${PORT}/api-docs`);
+      if (process.env.NODE_ENV !== 'production') {
+        logger.info(`API Documentation available at http://localhost:${PORT}/api-docs`);
+      }
     });
   } catch (error) {
-    logger.error('Unable to start server:', error);
-    process.exit(1);
+    logger.error('Unable to start server:', { 
+      error: error.message,
+      stack: error.stack
+    });
+    
+    if (process.env.NODE_ENV === 'production') {
+      logger.error('Critical error in production - attempting to continue');
+      app.listen(PORT, () => {
+        logger.info(`Server started on port ${PORT} despite database issues`);
+      });
+    } else {
+      process.exit(1);
+    }
   }
 }
 
 process.on('uncaughtException', (error) => {
-  logger.error('Uncaught Exception:', error);
-  process.exit(1);
+  logger.error('Uncaught Exception:', { 
+    error: error.message,
+    stack: error.stack
+  });
+  if (process.env.NODE_ENV !== 'production') {
+    process.exit(1);
+  }
 });
 
 process.on('unhandledRejection', (error) => {
-  logger.error('Unhandled Rejection:', error);
-  process.exit(1);
+  logger.error('Unhandled Rejection:', { 
+    error: error.message,
+    stack: error.stack
+  });
+  if (process.env.NODE_ENV !== 'production') {
+    process.exit(1);
+  }
 });
 
 startServer();
