@@ -9,7 +9,8 @@ RUN npm ci --only=production
 COPY . .
 
 ENV NODE_ENV=production
+ENV PORT=3000
 
-EXPOSE 3000
+EXPOSE ${PORT}
 
-CMD ["node", "src/index.js"]
+CMD ["sh", "-c", "node src/index.js"]
