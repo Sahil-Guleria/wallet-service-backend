@@ -13,4 +13,8 @@ ENV PORT=3000
 
 EXPOSE ${PORT}
 
-CMD ["sh", "-c", "node src/index.js"]
+# Add a script to run migrations and start the app
+COPY docker-entrypoint.sh /usr/local/bin/
+RUN chmod +x /usr/local/bin/docker-entrypoint.sh
+
+ENTRYPOINT ["docker-entrypoint.sh"]
