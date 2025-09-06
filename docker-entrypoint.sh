@@ -1,8 +1,7 @@
 #!/bin/sh
-set -e
 
-echo "Running database migrations..."
-npx sequelize-cli db:migrate
+# Wait for a few seconds to ensure database is ready
+sleep 5
 
-echo "Starting the application..."
-exec node src/index.js
+# Start the application
+exec "$@"
