@@ -2,12 +2,8 @@ const PDFDocument = require('pdfkit');
 const { logger } = require('../config/logger');
 
 function formatCurrency(amount) {
-  return new Intl.NumberFormat('en-IN', {
-    style: 'currency',
-    currency: 'INR',
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 4,
-  }).format(amount);
+  const absAmount = Math.abs(amount);
+  return `Rs.${absAmount.toFixed(4)}`; // Use "Rs." instead of ₹ symbol
 }
 
 function formatDate(date) {
@@ -32,7 +28,10 @@ async function generateTransactionPDF(transactions, walletId) {
   logger.info('Generating PDF with transactions:', {
     transactionDates: transactions.map((t) => ({ date: t.date, formatted: formatDate(t.date) })),
   });
-  const doc = new PDFDocument({ margin: 50 });
+  const doc = new PDFDocument({
+    margin: 50,
+    font: 'Helvetica', // Use Helvetica which has better Unicode support
+  });
 
   try {
     doc.fontSize(24).text('Transaction Statement', { align: 'center' }).moveDown(2);
@@ -101,13 +100,19 @@ async function generateTransactionPDF(transactions, walletId) {
       });
       currentX += columns.description.width;
 
-      doc.text(formatCurrency(transaction.amount), currentX + 5, rowY + 6, {
-        width: columns.amount.width - 10,
-        align: columns.amount.align,
-      });
+      const amountText =
+        transaction.type === 'CREDIT'
+          ? `+ ${formatCurrency(Math.abs(transaction.amount))}`
+          : `- ${formatCurrency(Math.abs(transaction.amount))}`;
+      doc
+        .fillColor(transaction.type === 'CREDIT' ? 'green' : 'red')
+        .text(amountText, currentX + 5, rowY + 6, {
+          width: columns.amount.width - 10,
+          align: columns.amount.align,
+        });
       currentX += columns.amount.width;
 
-      doc.text(formatCurrency(transaction.balance), currentX + 5, rowY + 6, {
+      doc.fillColor('black').text(formatCurrency(transaction.balance), currentX + 5, rowY + 6, {
         width: columns.balance.width - 10,
         align: columns.balance.align,
       });
