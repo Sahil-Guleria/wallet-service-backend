@@ -8,19 +8,24 @@ const { logger } = require('./config/logger');
 const { sequelize } = require('./models');
 const walletRoutes = require('./routes/wallet.routes');
 const authRoutes = require('./routes/auth.routes');
+const healthRoutes = require('./routes/health.routes');
 const errorHandler = require('./middleware/error.handler');
+const requestTracker = require('./middleware/request.tracker');
 
 const app = express();
 
 app.use(compression());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use(requestTracker);
+
+app.use('/health', healthRoutes);
 
 app.get('/', (req, res) => {
-  res.json({ 
+  res.json({
     status: 'ok',
     message: 'Wallet Service Backend is running',
-    timestamp: new Date().toISOString()
+    timestamp: new Date().toISOString(),
   });
 });
 
@@ -33,21 +38,25 @@ app.use((req, res, next) => {
 });
 
 app.use((req, res, next) => {
-  const allowedOrigins = ['http://localhost:3001', 'http://localhost:3000', 'https://wallet-service-frontend.onrender.com'];
-  
+  const allowedOrigins = [
+    'http://localhost:3001',
+    'http://localhost:3000',
+    'https://wallet-service-frontend.onrender.com',
+  ];
+
   const origin = req.headers.origin;
   if (allowedOrigins.includes(origin)) {
     res.header('Access-Control-Allow-Origin', origin);
   }
-  
+
   res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
   res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, Idempotency-Key');
   res.header('Access-Control-Allow-Credentials', 'true');
-  
+
   if (req.method === 'OPTIONS') {
     return res.status(200).end();
   }
-  
+
   next();
 });
 
@@ -59,7 +68,7 @@ app.use((req, res, next) => {
       method: req.method,
       path: req.path,
       status: res.statusCode,
-      duration: `${duration}ms`
+      duration: `${duration}ms`,
     });
   });
   next();
@@ -68,16 +77,16 @@ app.use((req, res, next) => {
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 app.use('/auth', authRoutes);
 app.use(
-  jwt({ 
+  jwt({
     secret: JWT_SECRET,
-    algorithms: ['HS256']
-  }).unless({ 
+    algorithms: ['HS256'],
+  }).unless({
     path: [
       '/auth/login',
       '/auth/register',
       '/api-docs',
-      { url: /^\/api-docs\/.*/, methods: ['GET'] }
-    ]
+      { url: /^\/api-docs\/.*/, methods: ['GET'] },
+    ],
   })
 );
 
@@ -92,7 +101,6 @@ async function startServer() {
     logger.info('Database connection has been established successfully.');
 
     const { Umzug, SequelizeStorage } = require('umzug');
-    const path = require('path');
 
     const umzug = new Umzug({
       migrations: { glob: 'src/db/migrations/*.js' },
@@ -112,11 +120,11 @@ async function startServer() {
       }
     });
   } catch (error) {
-    logger.error('Unable to start server:', { 
+    logger.error('Unable to start server:', {
       error: error.message,
-      stack: error.stack
+      stack: error.stack,
     });
-    
+
     if (process.env.NODE_ENV === 'production') {
       logger.error('Critical error in production - attempting to continue');
       app.listen(PORT, () => {
@@ -129,9 +137,9 @@ async function startServer() {
 }
 
 process.on('uncaughtException', (error) => {
-  logger.error('Uncaught Exception:', { 
+  logger.error('Uncaught Exception:', {
     error: error.message,
-    stack: error.stack
+    stack: error.stack,
   });
   if (process.env.NODE_ENV !== 'production') {
     process.exit(1);
@@ -139,9 +147,9 @@ process.on('uncaughtException', (error) => {
 });
 
 process.on('unhandledRejection', (error) => {
-  logger.error('Unhandled Rejection:', { 
+  logger.error('Unhandled Rejection:', {
     error: error.message,
-    stack: error.stack
+    stack: error.stack,
   });
   if (process.env.NODE_ENV !== 'production') {
     process.exit(1);

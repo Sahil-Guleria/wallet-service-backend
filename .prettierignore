@@ -1,0 +1,8 @@
+wnode_modules/
+dist/
+coverage/
+build/
+*.md
+*.min.js
+package-lock.json
+yarn.lock
