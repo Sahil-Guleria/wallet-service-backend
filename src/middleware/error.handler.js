@@ -15,6 +15,20 @@ module.exports = async (err, req, res, _next) => {
     traceId: req.traceId,
   };
 
+  // Log the full error details
+  logger.error('Error details:', {
+    error: err,
+    status: err.status,
+    statusCode: err.statusCode,
+    message: err.message,
+    errors: err.errors,
+    stack: err.stack,
+    path: req.path,
+    method: req.method,
+    traceId: req.traceId,
+    body: req.body,
+  });
+
   if (err instanceof ApiError) {
     error.errors = err.errors;
   }

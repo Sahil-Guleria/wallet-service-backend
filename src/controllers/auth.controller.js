@@ -21,25 +21,35 @@ const authController = {
       ]);
 
       if (existingUsername || existingEmail) {
-        throw new ApiError(409, 'Registration failed', [
-          ...(existingUsername
-            ? [
-                {
-                  field: 'username',
-                  message: 'This username is already taken',
-                },
-              ]
-            : []),
-          ...(existingEmail
-            ? [
-                {
-                  field: 'email',
-                  message: 'This email is already registered',
-                },
-              ]
-            : []),
-        ]);
+        logger.warn('Registration duplicate check failed:', {
+          existingUsername: !!existingUsername,
+          existingEmail: !!existingEmail,
+          requestUsername: username,
+          requestEmail: email,
+        });
+
+        const errors = [];
+        if (existingUsername) {
+          errors.push({
+            field: 'username',
+            message: 'This username is already taken',
+          });
+        }
+        if (existingEmail) {
+          errors.push({
+            field: 'email',
+            message: 'This email is already registered',
+          });
+        }
+
+        throw new ApiError(409, 'Account already exists', errors);
       }
+
+      logger.info('Attempting to create user:', {
+        username,
+        email,
+        hasPassword: !!password,
+      });
 
       const user = await User.create({
         username,
