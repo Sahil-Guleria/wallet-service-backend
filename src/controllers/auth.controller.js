@@ -62,9 +62,32 @@ const authController = {
         },
       });
     } catch (error) {
+      logger.error('Registration error:', {
+        error: error.message,
+        username: req.body.username,
+        email: req.body.email,
+      });
+
       if (error.name === 'ValidationError') {
         return next(new ApiError(400, 'Validation Error', formatValidationError(error)));
       }
+
+      if (
+        error.name === 'SequelizeValidationError' ||
+        error.name === 'SequelizeUniqueConstraintError'
+      ) {
+        return next(
+          new ApiError(
+            400,
+            'Validation Error',
+            error.errors.map((err) => ({
+              field: err.path,
+              message: err.message,
+            }))
+          )
+        );
+      }
+
       next(error);
     }
   },

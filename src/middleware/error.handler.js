@@ -7,7 +7,7 @@ module.exports = async (err, req, res, _next) => {
   const duration = Date.now() - startTime;
 
   let error = {
-    status: err.status || 'error',
+    status: err.status || (err.statusCode >= 500 ? 'error' : 'fail'),
     message: err.message,
     duration: `${duration}ms`,
     path: req.path,
