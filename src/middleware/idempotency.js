@@ -7,7 +7,7 @@ const IDEMPOTENCY_EXPIRY = 24 * 60 * 60; // 24 hours in seconds
 const idempotencyMiddleware = async (req, res, next) => {
   try {
     const idempotencyKey = req.headers['idempotency-key'];
-    
+
     if (!idempotencyKey) {
       return res.status(400).json({ error: 'Idempotency-Key header is required' });
     }
@@ -24,7 +24,7 @@ const idempotencyMiddleware = async (req, res, next) => {
       logger.error('Redis get error:', error);
       // Continue without cache on Redis error
     }
-    
+
     if (cachedResponse) {
       logger.info(`Returning cached response for idempotency key: ${idempotencyKey}`);
       return res.json(JSON.parse(cachedResponse));
@@ -34,15 +34,15 @@ const idempotencyMiddleware = async (req, res, next) => {
     const originalJson = res.json;
 
     // Override the json method to cache the response
-    res.json = async function(body) {
+    res.json = async function (body) {
       try {
         await redis.setEx(fullKey, IDEMPOTENCY_EXPIRY, JSON.stringify(body));
         logger.info('Cached response for idempotency key:', { key: idempotencyKey });
-      } catch (err) {
-        logger.error('Error caching idempotent response:', err);
+      } catch {
+        // logger.error('Error caching idempotent response:', err);
         // Continue without cache on Redis error
       }
-      
+
       return originalJson.call(this, body);
     };
 

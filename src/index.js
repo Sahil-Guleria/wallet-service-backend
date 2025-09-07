@@ -14,6 +14,13 @@ const requestTracker = require('./middleware/request.tracker');
 
 const app = express();
 
+// Test Logtail logging
+logger.info('Server starting up', {
+  environment: process.env.NODE_ENV,
+  timestamp: new Date().toISOString(),
+  version: '1.0.0',
+});
+
 app.use(compression());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
