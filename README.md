@@ -128,7 +128,7 @@ FIREBASE_SERVICE_ACCOUNT_BASE64=your-base64-encoded-credentials
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/username/wallet-service-backend.git
+   git clone https://github.com/Sahil-Guleria/wallet-service-backend
    cd wallet-service-backend
    ```
 
