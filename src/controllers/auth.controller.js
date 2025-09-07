@@ -1,13 +1,12 @@
-const bcrypt = require('bcryptjs');
 const { User } = require('../models');
 const ApiError = require('../utils/ApiError');
 const { logger } = require('../config/logger');
 const { generateToken } = require('../config/jwt');
 
 const formatValidationError = (error) => {
-  return error.details.map(detail => ({
+  return error.details.map((detail) => ({
     field: detail.context.key,
-    message: detail.message.replace(/['"]/g, '')
+    message: detail.message.replace(/['"]/g, ''),
   }));
 };
 
@@ -16,28 +15,39 @@ const authController = {
     try {
       const { username, password, email } = req.body;
 
-      const existingUsername = await User.findOne({ where: { username } });
-      if (existingUsername) {
-        throw new ApiError(409, 'Registration failed', [{
-          field: 'username',
-          message: 'This username is already taken'
-        }]);
-      }
+      const [existingUsername, existingEmail] = await Promise.all([
+        User.findOne({ where: { username } }),
+        User.findOne({ where: { email } }),
+      ]);
 
-      const existingEmail = await User.findOne({ where: { email } });
-      if (existingEmail) {
-        throw new ApiError(409, 'Registration failed', [{
-          field: 'email',
-          message: 'This email is already registered'
-        }]);
+      if (existingUsername || existingEmail) {
+        throw new ApiError(409, 'Registration failed', [
+          ...(existingUsername
+            ? [
+                {
+                  field: 'username',
+                  message: 'This username is already taken',
+                },
+              ]
+            : []),
+          ...(existingEmail
+            ? [
+                {
+                  field: 'email',
+                  message: 'This email is already registered',
+                },
+              ]
+            : []),
+        ]);
       }
 
       const user = await User.create({
         username,
         password,
         email,
-        isActive: true
+        isActive: true,
       });
+
       const token = generateToken(user);
 
       res.status(201).json({
@@ -47,9 +57,9 @@ const authController = {
           user: {
             id: user.id,
             username: user.username,
-            email: user.email
-          }
-        }
+            email: user.email,
+          },
+        },
       });
     } catch (error) {
       if (error.name === 'ValidationError') {
@@ -64,18 +74,20 @@ const authController = {
       const { username, password } = req.body;
 
       const user = await User.findOne({
-        where: { 
+        where: {
           username,
-          isActive: true
-        }
+          isActive: true,
+        },
       });
 
       if (!user || !(await user.validatePassword(password))) {
         logger.error('Login failed:', { username, exists: !!user });
-        throw new ApiError(401, 'Authentication failed', [{
-          field: 'credentials',
-          message: 'Invalid username or password'
-        }]);
+        throw new ApiError(401, 'Authentication failed', [
+          {
+            field: 'credentials',
+            message: 'Invalid username or password',
+          },
+        ]);
       }
 
       const token = generateToken(user);
@@ -88,9 +100,9 @@ const authController = {
           user: {
             id: user.id,
             username: user.username,
-            email: user.email
-          }
-        }
+            email: user.email,
+          },
+        },
       });
     } catch (error) {
       if (error.name === 'ValidationError') {
@@ -98,7 +110,7 @@ const authController = {
       }
       next(error);
     }
-  }
+  },
 };
 
 module.exports = authController;
